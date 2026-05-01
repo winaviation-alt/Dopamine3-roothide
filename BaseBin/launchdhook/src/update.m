@@ -126,14 +126,16 @@ void jbupdate_update_system_info(void)
 				"physmap",
 				"struct",
 				"physrw",
-				"perfkrw",
 				NULL,
 				NULL,
 				NULL,
-				NULL,	
+				NULL,
+				NULL,
 			};
 
-			uint32_t idx = 7;
+			uint32_t idx = 0;
+			while(sets[++idx]);
+
 			if (xpf_set_is_supported("devmode")) {
 				sets[idx++] = "devmode"; 
 			}
@@ -142,6 +144,9 @@ void jbupdate_update_system_info(void)
 			}
 			if (xpf_set_is_supported("arm64kcall")) {
 				sets[idx++] = "arm64kcall"; 
+			}
+			if (xpf_set_is_supported("perfkrw")) {
+				sets[idx++] = "perfkrw";
 			}
 
 
