@@ -345,7 +345,7 @@ typedef NS_ENUM(NSInteger, JBErrorCode) {
 {
     uint64_t cfver = (((uint64_t)kCFCoreFoundationVersionNumber / 100) * 100);
     if (cfver >= 2000) {
-        return nil;
+        return @"1900";
     }
     return [NSString stringWithFormat:@"%llu", cfver];
 }
@@ -648,6 +648,9 @@ typedef NS_ENUM(NSInteger, JBErrorCode) {
 #if 0
 - (NSError *)finalizeBootstrap
 {
+    printf("Finalize bootstrap...\n"); fflush(stdout);
+    sleep(3);
+
     // Initial setup on first jailbreak
     if ([[NSFileManager defaultManager] fileExistsAtPath:JBROOT_PATH(@"/prep_bootstrap.sh")]) {
         [[DOUIManager sharedInstance] sendLog:@"Finalizing Bootstrap" debug:NO];
@@ -659,6 +662,9 @@ typedef NS_ENUM(NSInteger, JBErrorCode) {
         NSError *error = [self installPackageManagers];
         if (error) return error;
     }
+
+    printf("Finalized bootstrap...\n"); fflush(stdout);
+    sleep(3);
     
     BOOL shouldInstallLibroot = [self shouldInstallPackage:@"libroot-dopamine"];
     BOOL shouldInstallLibkrw = [self shouldInstallPackage:@"libkrw0-dopamine"];
