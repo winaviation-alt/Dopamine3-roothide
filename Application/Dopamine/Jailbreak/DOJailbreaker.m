@@ -9,6 +9,7 @@
 #import "DOEnvironmentManager.h"
 #import "DOExploitManager.h"
 #import "DOUIManager.h"
+#import "DOPreferenceManager.h"
 #import <sys/stat.h>
 #import <compression.h>
 #import <xpf/xpf.h>
@@ -68,11 +69,20 @@ typedef NS_ENUM(NSInteger, JBErrorCode) {
 {
     NSString *kernelPath = [[DOEnvironmentManager sharedManager] accessibleKernelPath];
     if (!kernelPath) return [NSError errorWithDomain:JBErrorDomain code:JBErrorCodeFailedToFindKernel userInfo:@{NSLocalizedDescriptionKey:@"Failed to find kernelcache. Ensure your device is properly connected to the internet. If it still does not work, try installing Dopamine via TrollStore instead."}];
-    NSLog(@"Kernel at %s", kernelPath.UTF8String);
+    NSLog(@"Kernel at %@", kernelPath);
+
+    NSString *sptmPath = [[DOEnvironmentManager sharedManager] accessibleSPTMPath];
+    if (sptmPath) {
+        NSLog(@"SPTM at %@", sptmPath);
+    }
+    NSString *txmPath = [[DOEnvironmentManager sharedManager] accessibleTXMPath];
+    if (txmPath) {
+        NSLog(@"TXM at %@", txmPath);
+    }
 
     [[DOUIManager sharedInstance] sendLog:DOLocalizedString(@"Patchfinding") debug:NO];
 
-    int r = xpf_start_with_kernel_path(kernelPath.fileSystemRepresentation);
+    int r = xpf_start_with_kernel_path(kernelPath.fileSystemRepresentation, sptmPath ? sptmPath.fileSystemRepresentation : NULL, txmPath ? txmPath.fileSystemRepresentation : NULL);
     if (r == 0) {
         char *sets[99] = {
             "translation",
@@ -119,6 +129,12 @@ sets[idx] = NULL;
         _systemInfoXdict = xpf_construct_offset_dictionary((const char **)sets);
         if (_systemInfoXdict) {
             xpc_dictionary_set_uint64(_systemInfoXdict, "kernelConstant.staticBase", gXPF.kernelBase);
+            if (gXPF.sptm) {
+                xpc_dictionary_set_uint64(_systemInfoXdict, "kernelConstant.staticSptmBase", gXPF.sptmBase);
+            }
+            if (gXPF.txm) {
+                xpc_dictionary_set_uint64(_systemInfoXdict, "kernelConstant.staticTxmBase", gXPF.txmBase);
+            }
             printf("System Info:\n");
             xpc_dictionary_apply(_systemInfoXdict, ^bool(const char *key, xpc_object_t value) {
                 if (xpc_get_type(value) == XPC_TYPE_UINT64) {
@@ -315,8 +331,17 @@ sets[idx] = NULL;
 - (NSError *)ensureDevModeEnabled
 {
     if (@available(iOS 16.0, *)) {
-        uint64_t developer_mode_storage = kread64(ksymbol(developer_mode_enabled));
-        kwrite8(developer_mode_storage, 1);
+        uint64_t developer_mode_storage = 0;
+        if (ksymbol(developer_mode_enabled)) {
+            developer_mode_storage = kread64(ksymbol(developer_mode_enabled));
+        }
+        else if (ksymbol_txm(txm_developer_mode_storage)) {
+            developer_mode_storage = ksymbol_txm(txm_developer_mode_storage);
+        }
+
+        if (developer_mode_storage) {
+            kwrite8(developer_mode_storage, 1);
+        }
     }
     return nil;
 }
@@ -325,7 +350,7 @@ sets[idx] = NULL;
 - (NSError *)loadBasebinTrustcache
 {
     trustcache_file_v1 *basebinTcFile = NULL;
-    if (trustcache_file_build_from_path([[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"basebin.tc"].fileSystemRepresentation, &basebinTcFile) == 0) {
+    if (trustcache_file_build_from_path(JBROOT_PATH("/basebin/basebin.tc"), &basebinTcFile) == 0) {
         int r = trustcache_file_upload_with_uuid(basebinTcFile, BASEBIN_TRUSTCACHE_UUID);
         free(basebinTcFile);
         if (r != 0) return [NSError errorWithDomain:JBErrorDomain code:JBErrorCodeFailedBasebinTrustcache userInfo:@{NSLocalizedDescriptionKey : [NSString stringWithFormat:@"Failed to upload BaseBin trustcache: %d", r]}];
@@ -538,7 +563,7 @@ void *boomerang_server(struct boomerang_info *info)
         kwrite32(ucred + koffsetof(ucred, svuid), 501);
         kwrite32(ucred + koffsetof(ucred, ruid), 501);
         kwrite32(ucred + koffsetof(ucred, uid), 501);
-        
+
         // Get gid 0
         kwrite32(ucred + koffsetof(ucred, rgid), 501);
         kwrite32(ucred + koffsetof(ucred, svgid), 501);

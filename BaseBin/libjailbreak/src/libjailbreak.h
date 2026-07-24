@@ -5,6 +5,7 @@
 #include "translation.h"
 #include "trustcache.h"
 #include "jbclient_xpc.h"
+#include "stock_fixes.h"
 
 #include "roothider.h"
 
