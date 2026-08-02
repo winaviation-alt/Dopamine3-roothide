@@ -40,9 +40,9 @@ int main(int argc, char * argv[]) {
     // This can happen when the jailbreak is hidden or when tweak injection into the Dopamine app is disabled via Choicy
     jbclient_process_checkin(NULL, NULL, NULL, NULL);
     
-    if (geteuid() == 0) seteuid(501);
     if (getegid() == 0) setegid(501);
-    
+    if (geteuid() == 0) seteuid(501);
+
     if ([DOEnvironmentManager sharedManager].isJailbroken) {
         setenv("PATH", "/sbin:/bin:/usr/sbin:/usr/bin:/rootfs/sbin:/rootfs/bin:/rootfs/usr/sbin:/rootfs/usr/bin", 1);
         setenv("TERM", "xterm-256color", 1);
