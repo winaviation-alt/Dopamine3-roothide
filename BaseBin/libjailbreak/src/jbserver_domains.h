@@ -48,7 +48,6 @@ enum {
     JBS_ROOT_TRUSTCACHE_CLEAR,
 };
 
-
 #define JBS_DOMAIN_ROOTHIDE 5 // index in gGlobalServer
 enum {
     JBS_ROOTHIDE_JAILBROKEN_CHECK=1,
@@ -62,7 +61,14 @@ enum {
     JBS_ROOTHIDE_DYLD_PATCH_ENABLED_SET,
 };
 
-
+// Domain: Dopamine
+// Reachable exclusively from Dopamine app
+#define JBS_DOMAIN_DOPAMINE 6
+enum {
+    JBS_DOPAMINE_IS_JAILBROKEN = 1,
+    JBS_DOPAMINE_GET_ROOT,
+    JBS_DOPAMINE_DROP_ROOT,
+};
 #define JBS_BOOMERANG_DONE 42
 
 #endif

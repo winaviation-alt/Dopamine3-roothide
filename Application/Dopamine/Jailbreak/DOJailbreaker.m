@@ -674,7 +674,9 @@ void *boomerang_server(struct boomerang_info *info)
     *errOut = [self injectLaunchdHook];
     if (*errOut) return;
 
-/*
+    // After the launchd hook is initialized, we need to make the app believe the device is jailbroken
+    [[DOEnvironmentManager sharedManager] setJailbroken:YES];
+
     // Now that we can, protect important system files by bind mounting on top of them
     // This will be always be done during the userspace reboot
     // We also do it now though in case there is a failure between the now step and the userspace reboot
@@ -765,7 +767,7 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
     vm_region_submap_short_info_data_64_t info = {0};
     uint32_t count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
     natural_t depth = 9999999;
-    
+
     kern_return_t kr = vm_region_recurse_64(mach_task_self(), &mem_addr, &mem_size, &depth, (vm_region_recurse_info_t)&info, &count);
     return (kr == 0 && info.share_mode == SM_EMPTY && info.object_id != 0);
 }
@@ -774,7 +776,7 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
 {
     IOSurfaceRef surface = [self allocatePurpleGfxMemWithSize:0x8000];
     if (surface == NULL) return false;
-    
+
     BOOL contiguous = [self surfaceIsContiguous:surface];
     CFRelease(surface);
     return contiguous;
@@ -800,9 +802,9 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
         mach_msg_type_number_t archiveLength;
     } Request;
 #pragma pack(pop)
-    
+
     kern_return_t bootstrap_look_up(mach_port_t, const char *, mach_port_t *);
-    
+
     NSData *archive =
         [NSKeyedArchiver archivedDataWithRootObject:@[ @[] ]
                               requiringSecureCoding:YES
@@ -837,7 +839,7 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
                    MACH_PORT_NULL,
                    1000,
                    MACH_PORT_NULL);
-    
+
     mach_port_deallocate(mach_task_self(), service);
     return 0;
 }
@@ -845,7 +847,7 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
 - (void)applyContiguousMappingWorkaround
 {
     [self crashBackboardd];
-    
+
     // After backboardd has crashed, we have about 200ms until the new backboardd kills our app
     // In this timeframe we need to steal it's contiguous PurpleGfxMem allocation
     IOSurfaceRef surface = NULL;
@@ -858,9 +860,9 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
         surface = [self allocatePurpleGfxMemWithSize:0x8000];
     }
     while (![self surfaceIsContiguous:surface]);
-    
+
     printf("Got contiguous mapping surface %p\n", surface);
-    
+
     // We keep the surface alive for another 20 seconds
     // This persists our process being killed
     // Once it is freed, the next Dopamine can regain the contiguous mapping
@@ -868,7 +870,7 @@ setenv("DYLD_INSERT_LIBRARIES", JBROOT_PATH("/basebin/systemhook.dylib"), 1);
     kern_return_t kr = clock_alarm_preserve_port(surfacePort, 20);
     mach_port_mod_refs(mach_task_self(), surfacePort, MACH_PORT_RIGHT_SEND, -1);
     CFRelease(surface);
-    
+
     printf("preserved port? %d\n", kr);
 }
 
