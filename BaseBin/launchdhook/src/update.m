@@ -128,6 +128,7 @@ void jbupdate_update_system_info(void)
 				"physmap",
 				"struct",
 				"physrw",
+				"IOSurface",
 				NULL,
 				NULL,
 				NULL,
