@@ -159,6 +159,11 @@ sets[idx] = NULL;
 
     jbinfo_initialize_dynamic_offsets(_systemInfoXdict);
     jbinfo_initialize_hardcoded_offsets();
+
+    // Stash app identifier into jailbreakInfo
+    // This will later allow launchdhook to figure out which process is the dopamine app
+    gSystemInfo.jailbreakInfo.appIdentifier = strdup([NSBundle mainBundle].bundleIdentifier.UTF8String);
+
     _systemInfoXdict = jbinfo_get_serialized();
 
     if (_systemInfoXdict) {

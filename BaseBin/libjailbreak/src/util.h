@@ -110,5 +110,6 @@ NSString *NSPrebootUUIDPath(NSString *relativePath);
 #endif
 
 void JBFixMobilePermissions(void);
+bool is_dopamine_app(const char *pathC);
 
 #endif
