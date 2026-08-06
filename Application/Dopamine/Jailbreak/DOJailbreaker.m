@@ -162,7 +162,9 @@ sets[idx] = NULL;
 
     // Stash app identifier into jailbreakInfo
     // This will later allow launchdhook to figure out which process is the dopamine app
-    gSystemInfo.jailbreakInfo.appIdentifier = strdup([NSBundle mainBundle].bundleIdentifier.UTF8String);
+    if ([NSBundle mainBundle].bundleIdentifier) {
+        gSystemInfo.jailbreakInfo.appIdentifier = strdup([NSBundle mainBundle].bundleIdentifier.UTF8String);
+    }
 
     _systemInfoXdict = jbinfo_get_serialized();
 
