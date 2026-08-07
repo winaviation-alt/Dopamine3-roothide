@@ -208,23 +208,22 @@ bool should_enable_tweaks(void)
 		}
 	}
 
-
-/******************* roothide specific ***************/
-const char *safeModeValue = getenv("_SafeMode");
-if (safeModeValue) {
-	if (!strcmp(safeModeValue, "1")) {
-		return false;
+	/******************* roothide specific ***************/
+	const char *safeModeValue = getenv("_SafeMode");
+	if (safeModeValue) {
+		if (!strcmp(safeModeValue, "1")) {
+			return false;
+		}
 	}
-}
-const char *msSafeModeValue = getenv("_MSSafeMode");
-if (msSafeModeValue) {
-	if (!strcmp(msSafeModeValue, "1")) {
-		return false;
+	const char *msSafeModeValue = getenv("_MSSafeMode");
+	if (msSafeModeValue) {
+		if (!strcmp(msSafeModeValue, "1")) {
+			return false;
+		}
 	}
-}
-/******************* roothide specific *************/
+	/******************* roothide specific *************/
 
-	if (jbclient_dopamine_is_jailbroken()) {
+		if (jbclient_dopamine_is_jailbroken(NULL)) {
 		// Probe whether we are the Dopamine app
 		// Only the Dopamine app is allowed to contact this domain
 		// In this case we want to disable tweak injection to prevent jailbreak detections etc messing with the app functionality

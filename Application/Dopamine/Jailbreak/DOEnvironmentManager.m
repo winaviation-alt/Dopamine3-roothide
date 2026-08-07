@@ -255,7 +255,7 @@ CFPropertyListRef MGCopyAnswer(CFStringRef);
     return trollstoreInstallation;
 }
 
-- (BOOL)isJailbroken
+- (void)updateJailbreakState
 {
 /************** roothide specific ***********/
     if(!jbclient_roothide_jailbroken())
@@ -266,8 +266,18 @@ CFPropertyListRef MGCopyAnswer(CFStringRef);
     static BOOL jailbroken = NO;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _isJailbroken = jbclient_dopamine_is_jailbroken();
+        char *jbVersionC = NULL;
+        _isJailbroken = jbclient_dopamine_is_jailbroken(&jbVersionC);
+        if (jbVersionC) {
+            _jailbrokenVersion = [NSString stringWithUTF8String:jbVersionC];
+            free(jbVersionC);
+        }
     });
+}
+
+- (BOOL)isJailbroken
+{
+    [self updateJailbreakState];
     return _isJailbroken;
 }
 
@@ -288,15 +298,9 @@ CFPropertyListRef MGCopyAnswer(CFStringRef);
 
 - (NSString *)jailbrokenVersion
 {
-    if (!self.isJailbroken) return nil;
-
-    __block NSString *version;
-    [self runAsRoot:^{
-        [self runUnsandboxed:^{
-            version = [NSString stringWithContentsOfFile:JBROOT_PATH(@"/basebin/.version") encoding:NSUTF8StringEncoding error:nil];
-        }];
-    }];
-    return [[version componentsSeparatedByString:@"."] lastObject];
+    [self updateJailbreakState];
+    if (!_isJailbroken) return nil;
+    return _jailbrokenVersion;
 }
 
 - (NSString *)systemVersion
@@ -645,7 +649,7 @@ CFPropertyListRef MGCopyAnswer(CFStringRef);
     if ([[NSFileManager defaultManager] fileExistsAtPath:sptmInDocsPath]) {
         return sptmInDocsPath;
     }
-    
+
     sptmInDocsPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/sptm.im4p"];
     if ([[NSFileManager defaultManager] fileExistsAtPath:sptmInDocsPath]) {
         return sptmInDocsPath;
@@ -672,7 +676,7 @@ CFPropertyListRef MGCopyAnswer(CFStringRef);
     if ([[NSFileManager defaultManager] fileExistsAtPath:txmInDocsPath]) {
         return txmInDocsPath;
     }
-    
+
     txmInDocsPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/txm.im4p"];
     if ([[NSFileManager defaultManager] fileExistsAtPath:txmInDocsPath]) {
         return txmInDocsPath;
