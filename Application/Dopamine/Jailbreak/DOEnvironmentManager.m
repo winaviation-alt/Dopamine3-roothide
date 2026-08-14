@@ -312,10 +312,10 @@ extern char **environ;
     if (![self isJailbroken]) {
         uint32_t csFlags = 0;
         csops(getpid(), CS_OPS_STATUS, &csFlags, sizeof(csFlags));
-        
+
         // Palera1n
         if (csFlags & CS_PLATFORM_BINARY) return YES;
-        
+
         // Older Dopamine build
         if (!access("/usr/lib/systemhook.dylib", F_OK)) return YES;
     }
@@ -398,11 +398,17 @@ extern char **environ;
 
     [self runAsRoot:^{
         [self runUnsandboxed:^{
-            r = posix_spawn(&pid, argBuf[0], &act, NULL, (char *const *)argBuf, (char *const *)environ);
+            r = posix_spawn(&pid, argBuf[0], &act, &attr, (char *const *)argBuf, (char *const *)environ);
+            if (needsLegacySolution) {
+                // Legacy solution is a gamble, which is why it was removed and superseeded by --waitfor
+                // But if jailbroken with <3.0.5, jbctl doesn't support --waitfor yet
+                kill(pid, SIGCONT);
+            }
         }];
         // We *NEED* to leave this block on iOS 17+ to avoid a panic, --waitfor ensures this always happens
     }];
 
+    posix_spawnattr_destroy(&attr);
     posix_spawn_file_actions_destroy(&act);
     for (int y = 0; y < i; y++) {
         free(argBuf[y]);
@@ -418,7 +424,7 @@ extern char **environ;
     close(waitPipe[0]);
     close(waitPipe[1]);
 
-    return r;
+    return cmd_wait_for_exit(pid);
 }
 
 - (int)runTrollStoreAction:(NSString *)action
