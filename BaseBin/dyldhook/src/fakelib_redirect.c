@@ -55,3 +55,5 @@ void *HOOK(_ZN5dyld44APIs11dlopen_fromEPKciPv)(uintptr_t self, const char* path,
 }
 
 #endif
+
+#endif /* disabled fakelib_redirect.c */
