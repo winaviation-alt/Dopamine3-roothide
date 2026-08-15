@@ -194,9 +194,13 @@ int IOSurface_map_withCacheMode(uint64_t pa, uint64_t size, void **uaddr, uint32
 	*uaddr = IOSurfaceGetBaseAddress(mappedSurfaceRef);
 
 /*********************** roothide specific **************************************/
-    vm_prot_t cur_prot, max_prot;
-    kern_return_t kr = vm_remap(mach_task_self(), uaddr, size, 0, VM_FLAGS_ANYWHERE, mach_task_self(), (vm_address_t)*uaddr, FALSE, &cur_prot, &max_prot, VM_INHERIT_NONE);
-    assert (kr == KERN_SUCCESS);
+	vm_prot_t cur_prot, max_prot;
+	vm_address_t remappedAddress = (vm_address_t)*uaddr;
+	kern_return_t kr = vm_remap(mach_task_self(), &remappedAddress, size, 0, VM_FLAGS_ANYWHERE,
+	                            mach_task_self(), (vm_address_t)*uaddr, FALSE,
+	                            &cur_prot, &max_prot, VM_INHERIT_NONE);
+	assert(kr == KERN_SUCCESS);
+	*uaddr = (void *)remappedAddress;
 /*********************************************************************************/
 
 	return 0;
@@ -242,24 +246,6 @@ static mach_port_t IOSurface_kalloc_getSurfacePort_16up(uint64_t size) {
     }
 
     CFDataRef addressRanges = CFDataCreate(kCFAllocatorDefault, (const UInt8 *)addressRangesBuf, rangesAlignedSize);
-    free(addressRangesBuf);
-
-    CFMutableDictionaryRef dict = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
-    CFDictionarySetValue(dict, CFSTR("IOSurfaceAllocSize"), CFNUM64(allocSize));
-    CFDictionarySetValue(dict, CFSTR("IOSurfaceAddressRanges"), addressRanges);
-
-    IOSurfaceRef surfaceRef = IOSurfaceCreate(dict);
-    mach_port_t port = IOSurfaceCreateMachPort(surfaceRef);
-    IOSurfaceDecrementUseCount(surfaceRef);
-    return port;
-}
-
-    for (int i = 0; i < (size / sizeof(uint64_t)); i += 2) {
-        addressRangesBuf[i] = (uint64_t)pageAlloc;
-        addressRangesBuf[i + 1] = allocSize;
-    }
-
-    CFDataRef addressRanges = CFDataCreate(kCFAllocatorDefault, (const UInt8 *)addressRangesBuf, size);
     free(addressRangesBuf);
 
     CFMutableDictionaryRef dict = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);

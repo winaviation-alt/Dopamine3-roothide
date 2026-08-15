@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <choma/MachO.h>
 #include <choma/Fat.h>
 #include <choma/MemoryStream.h>
@@ -100,34 +102,19 @@ bool macho_parse_code_signature(MachO *macho, cdhash_t cdhashOut)
 	return isAdhocSigned;
 }
 
-void fat_collect_untrusted_cdhashes(Fat *fat, cdhash_t **cdhashesOut, uint32_t *cdhashCountOut)
+void fat_collect_untrusted_cdhashes(Fat *fat, const char *filepath, cdhash_t **cdhashesOut, uint32_t *cdhashCountOut)
 {
-/*************************************** roothide specfic *************************************/
-static char __thread filepath[PATH_MAX] = {0};
-if(fcntl(fd, F_GETPATH, filepath) != 0) {
-	JBLogError("Failed to get file path for fd %d", fd);
-	return;
-}
-if(string_has_prefix(filepath, "/private/preboot/Cryptexes/")) {
-	JBLogDebug("Skipping Cryptexes file: %s", filepath);
-	return;
-}
-if(isRemovableBundlePath(filepath) && !hasTrollstoreLiteMarker(filepath)) {
-	// ignore adhoc signed apps(removable system apps or other stuffs) which is not installed via tslite
-	JBLogDebug("ignoring addhoc signed app: %s\n", filepath);
-	return;
-}
-/*************************************** roothide specfic *************************************/
-
-
-	MemoryStream *s = file_stream_init_from_file_descriptor(fd, 0, FILE_STREAM_SIZE_AUTO, 0);
-	if (!s) return;
-
-	Fat *fat = fat_init_from_memory_stream(s);
-	if (!fat) {
-		memory_stream_free(s);
+/*************************************** roothide specific *************************************/
+	if (filepath && string_has_prefix(filepath, "/private/preboot/Cryptexes/")) {
+		JBLogDebug("Skipping Cryptexes file: %s", filepath);
 		return;
 	}
+	if (filepath && isRemovableBundlePath(filepath) && !hasTrollstoreLiteMarker(filepath)) {
+		// Ignore ad-hoc signed removable system apps unless installed via TrollStore Lite.
+		JBLogDebug("Ignoring ad-hoc signed app: %s\n", filepath);
+		return;
+	}
+/*************************************** roothide specific *************************************/
 
 	__block cdhash_t *cdhashes = NULL;
 	__block uint32_t cdhashCount = 0;
@@ -138,12 +125,12 @@ if(isRemovableBundlePath(filepath) && !hasTrollstoreLiteMarker(filepath)) {
 				if (!is_cdhash_trustcached(cdhash)) {
 
 
-/*************************************** roothide specfic *************************************/
-if(ensure_randomized_cdhash_for_slice(filepath, macho->archDescriptor.offset, cdhash) != 0) {
-	JBLogError("Failed to ensure randomized cdhash for %s", filepath);
-	return;
-}
-/**************************************** roothide specfic *************************************/
+/*************************************** roothide specific *************************************/
+					if (filepath && ensure_randomized_cdhash_for_slice(filepath, macho->archDescriptor.offset, cdhash) != 0) {
+						JBLogError("Failed to ensure randomized cdhash for %s", filepath);
+						return;
+					}
+/**************************************** roothide specific *************************************/
 
 
 					cdhashCount++;
@@ -160,6 +147,14 @@ if(ensure_randomized_cdhash_for_slice(filepath, macho->archDescriptor.offset, cd
 
 void file_collect_untrusted_cdhashes(int fd, cdhash_t **cdhashesOut, uint32_t *cdhashCountOut)
 {
+/*************************************** roothide specific *************************************/
+	char filepath[PATH_MAX] = {0};
+	if (fcntl(fd, F_GETPATH, filepath) != 0) {
+		JBLogError("Failed to get file path for fd %d", fd);
+		return;
+	}
+/*************************************** roothide specific *************************************/
+
 	MemoryStream *s = file_stream_init_from_file_descriptor(fd, 0, FILE_STREAM_SIZE_AUTO, 0);
 	if (!s) return;
 
@@ -169,7 +164,7 @@ void file_collect_untrusted_cdhashes(int fd, cdhash_t **cdhashesOut, uint32_t *c
 		return;
 	}
 
-	fat_collect_untrusted_cdhashes(fat, cdhashesOut, cdhashCountOut);
+	fat_collect_untrusted_cdhashes(fat, filepath, cdhashesOut, cdhashCountOut);
 
 	fat_free(fat);
 }
