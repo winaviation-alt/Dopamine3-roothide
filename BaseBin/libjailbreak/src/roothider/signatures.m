@@ -11,6 +11,7 @@
 
 #define DEBUG_LOG(...) //JBLogDebug(__VA_ARGS__)
 
+#ifndef ROOTHIDE_DOPAMINE_CLI
 MachO* fat_find_preferred_slice(Fat *fat)
 {
 	cpu_type_t cputype;
@@ -43,6 +44,8 @@ MachO* fat_find_preferred_slice(Fat *fat)
 
 	return candidateSlice;
 }
+
+#endif /* !ROOTHIDE_DOPAMINE_CLI */
 
 extern bool csd_superblob_is_adhoc_signed(CS_DecodedSuperBlob *superblob);
 

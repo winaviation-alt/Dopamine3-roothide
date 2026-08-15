@@ -237,6 +237,7 @@ int roothide_config_set_spinlock_fix(bool enabled)
     return 0;
 }
 
+#ifndef ROOTHIDE_DOPAMINE_CLI
 bool string_has_prefix(const char *str, const char* prefix)
 {
 	if (!str || !prefix) {
@@ -268,6 +269,8 @@ bool string_has_suffix(const char* str, const char* suffix)
 
 	return !strcmp(str + str_len - suffix_len, suffix);
 }
+
+#endif /* !ROOTHIDE_DOPAMINE_CLI */
 
 #define APP_PATH_PREFIX "/private/var/containers/Bundle/Application/"
 char* getAppUUIDPath(const char* path)
