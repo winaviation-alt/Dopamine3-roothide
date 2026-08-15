@@ -17,8 +17,8 @@
 #import "hookd_provider.h"
 #import <libjailbreak/hookd.h>
 #import <litehook.h>
-#import "../systemhook/src/common/common.h"
-#import "../systemhook/src/common/hookd_external.h"
+#import "../../systemhook/src/common/common.h"
+#import "../../systemhook/src/common/hookd_external.h"
 #import "spawn_hook.h"
 #import "xpc_hook.h"
 #import "daemon_hook.h"
@@ -142,8 +142,8 @@ __attribute__((constructor)) static void initializer(void)
 			remove("/var/mobile/Library/Preferences/com.apple.NanoRegistry.NRLaunchNotificationController.volatile.plist");
 		}
 
-/*********************** roothide specific ********************
-		draw_boot_logo(JBROOT_PATH("/basebin/bootlogo.jp2"));
+/*********************** roothide specific ********************/
+		// draw_boot_logo(JBROOT_PATH("/basebin/bootlogo.jp2"));
 /*********************** roothide specific ********************/
 		gFreeBootLogoBeforeBackboardd = YES;
 	}

@@ -1,5 +1,5 @@
 #include "common.h"
-#include "roothider.h"
+#include "../roothider.h"
 #include <xpc/xpc.h>
 #include <xpc_private.h>
 #include <mach-o/dyld.h>

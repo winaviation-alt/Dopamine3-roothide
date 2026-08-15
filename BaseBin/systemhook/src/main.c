@@ -12,7 +12,7 @@
 #include <libjailbreak/codesign.h>
 #include <libjailbreak/jbroot.h>
 #include <libjailbreak/hookd.h>
-#include "../dyldhook/src/dyld_jbinfo.h"
+#include "../../dyldhook/src/dyld_jbinfo.h"
 #include "common/hookd_external.h"
 #include <choma/CSBlob.h>
 #include "litehook.h"

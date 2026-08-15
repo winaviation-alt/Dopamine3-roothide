@@ -21,8 +21,12 @@ int necp_session_open(int flags);
 int necp_session_action(int necp_fd, uint32_t action, uint8_t *in_buffer, size_t in_buffer_length, uint8_t *out_buffer, size_t out_buffer_length);
 
 int ptrace(int request, pid_t pid, caddr_t addr, int data);
+#ifndef PT_ATTACH
 #define PT_ATTACH       10      /* trace some running process */
+#endif
+#ifndef PT_ATTACHEXC
 #define PT_ATTACHEXC    14      /* attach to running process with signal exception */
+#endif
 
 extern kern_return_t mach_vm_protect(vm_map_t target_task, mach_vm_address_t address, mach_vm_size_t size, boolean_t set_maximum, vm_prot_t new_protection);
 extern kern_return_t _kernelrpc_mach_vm_protect_trap(mach_port_name_t target, mach_vm_address_t address, mach_vm_size_t size, boolean_t set_maximum, vm_prot_t new_protection);

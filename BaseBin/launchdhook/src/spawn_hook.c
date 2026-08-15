@@ -1,5 +1,5 @@
 #include <spawn.h>
-#include "../systemhook/src/common/common.h"
+#include "../../systemhook/src/common/common.h"
 #include "boomerang.h"
 #include "crashreporter.h"
 #include "update.h"
