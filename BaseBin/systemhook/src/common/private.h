@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <uuid/uuid.h>
 #include <mach/mach.h>
-#include <mach/mach_vm.h>
+#include <mach/vm_types.h>
 #include <mach/vm_region.h>
 #include <mach-o/dyld.h>
 
