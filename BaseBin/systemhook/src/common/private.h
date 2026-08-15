@@ -1,6 +1,16 @@
 #ifndef SYSTEMHOOK_PRIVATE
 #define SYSTEMHOOK_PRIVATE
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <spawn.h>
+#include <sys/param.h>
+#include <sys/types.h>
+#include <uuid/uuid.h>
+#include <mach/mach.h>
+#include <mach/mach_vm.h>
+#include <mach/vm_region.h>
 #include <mach-o/dyld.h>
 
 #define SYS_ptrace 0x1A
