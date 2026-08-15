@@ -6,6 +6,7 @@
 //
 
 #include <unistd.h>
+#include <string.h>
 #include <mach/mach.h>
 #include <mach/clock.h>
 #include <mach/clock_types.h>
