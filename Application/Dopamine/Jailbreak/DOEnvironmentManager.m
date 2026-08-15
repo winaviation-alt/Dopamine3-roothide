@@ -611,7 +611,6 @@ extern char **environ;
     }
 }
 
-/*
 - (BOOL)isFakelibMounted
 {
     struct statfs fsb;
@@ -629,6 +628,7 @@ extern char **environ;
     return r;
 }
 
+/*
 - (int)setPrivatePrebootProtected:(BOOL)protected
 {
     NSString *arg = protected ? @"activate" : @"deactivate";
