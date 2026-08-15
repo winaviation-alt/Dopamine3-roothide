@@ -279,12 +279,13 @@ extern char **environ;
 - (void)updateJailbreakState
 {
 /************** roothide specific ***********/
-    if(!jbclient_roothide_jailbroken())
-        return NO;
+    if (!jbclient_roothide_jailbroken()) {
+        _isJailbroken = NO;
+        _jailbrokenVersion = nil;
+        return;
+    }
 /************** roothide specific ********/
 
-
-    static BOOL jailbroken = NO;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         char *jbVersionC = NULL;
@@ -379,19 +380,32 @@ extern char **environ;
     int waitPipe[2];
     pipe(waitPipe);
 
-    char **argBuf = malloc((args.count + 4) * sizeof(char *));
+    NSString *jailbrokenVersion = [self jailbrokenVersion];
+    BOOL needsLegacySolution = jailbrokenVersion &&
+        [jailbrokenVersion compare:@"3.0.5" options:NSNumericSearch] == NSOrderedAscending;
+
+    NSUInteger extraArgCount = needsLegacySolution ? 2 : 4;
+    char **argBuf = malloc((args.count + extraArgCount) * sizeof(char *));
     argBuf[0] = strdup(JBROOT_PATH("/basebin/jbctl"));
     int i = 1;
     for (NSString *arg in args) {
         argBuf[i++] = strdup(arg.UTF8String);
     }
-    argBuf[i++] = strdup("--waitfor");
-    argBuf[i++] = strdup("3");
+    if (!needsLegacySolution) {
+        argBuf[i++] = strdup("--waitfor");
+        argBuf[i++] = strdup("3");
+    }
     argBuf[i++] = NULL;
 
     posix_spawn_file_actions_t act;
-	posix_spawn_file_actions_init(&act);
-	posix_spawn_file_actions_adddup2(&act, waitPipe[0], 3);
+    posix_spawn_file_actions_init(&act);
+    posix_spawn_file_actions_adddup2(&act, waitPipe[0], 3);
+
+    posix_spawnattr_t attr;
+    posix_spawnattr_init(&attr);
+    if (needsLegacySolution) {
+        posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+    }
 
     __block int pid = 0;
     __block int r = -1;
@@ -399,7 +413,7 @@ extern char **environ;
     [self runAsRoot:^{
         [self runUnsandboxed:^{
             r = posix_spawn(&pid, argBuf[0], &act, &attr, (char *const *)argBuf, (char *const *)environ);
-            if (needsLegacySolution) {
+            if (needsLegacySolution && r == 0) {
                 // Legacy solution is a gamble, which is why it was removed and superseeded by --waitfor
                 // But if jailbroken with <3.0.5, jbctl doesn't support --waitfor yet
                 kill(pid, SIGCONT);
