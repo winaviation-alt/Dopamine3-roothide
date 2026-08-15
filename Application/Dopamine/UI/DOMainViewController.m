@@ -161,7 +161,7 @@
         [self startJailbreak];
         
     }]];
-    self.jailbreakBtn.enabled = !isJailbroken && isSupported;
+    self.jailbreakBtn.enabled = YES;
 
     [self.view addSubview:self.jailbreakBtn];
 
