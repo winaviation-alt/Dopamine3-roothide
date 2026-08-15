@@ -9,6 +9,7 @@
 #include <paths.h>
 #include <sys/stat.h>
 #include <dlfcn.h>
+#include <unistd.h>
 #include "envbuf.h"
 #include "private.h"
 #include <libjailbreak/jbclient_xpc.h>
@@ -144,6 +145,16 @@ kSpawnConfig spawn_config_for_executable(const char* path, char *const argv[rest
 	}
 
 	return (kSpawnConfigInject | kSpawnConfigTrust);
+}
+
+int __posix_spawn_orig(pid_t *restrict pid, const char *restrict path, struct _posix_spawn_args_desc *desc, char *const argv[restrict], char * const envp[restrict])
+{
+	return (int)syscall(SYS_posix_spawn, pid, path, desc, argv, envp);
+}
+
+int __execve_orig(const char *path, char *const argv[], char *const envp[])
+{
+	return (int)syscall(SYS_execve, path, argv, envp);
 }
 
 // 1. Ensure the binary about to be spawned and all of it's dependencies are trust cached
